@@ -25,8 +25,8 @@ module i2s_clk_top(
     wire pll_4x_48k, locked_48k;
     wire pll_4x_44k1, locked_44k1;
     
-    // MUX输出
-    wire pll_4x, locked;
+    // Sync + MUX 输出
+    wire pll_4x, locked, cnt_reset;
     
     // 时钟生成输出
     wire mclk, bclk, fsclk;
@@ -44,23 +44,25 @@ module i2s_clk_top(
         .locked_44k1   (locked_44k1)
     );
     
-    // 2. 时钟MUX（选择当前使用的PLL）
-    i2s_clock_mux u_mux (
-        .clk_48k       (pll_4x_48k),
+    // 2. 双PLL同步 + 时钟MUX（三级同步sample_sel，切换时复位计数器）
+    i2s_dual_pll_sync u_sync (
+        .pll_4x_48k    (pll_4x_48k),
         .locked_48k    (locked_48k),
-        .clk_44k1      (pll_4x_44k1),
+        .pll_4x_44k1   (pll_4x_44k1),
         .locked_44k1   (locked_44k1),
         .sample_sel    (sample_sel),
-        
+        .reset         (reset),
+
         .pll_4x        (pll_4x),
-        .locked        (locked)
+        .locked        (locked),
+        .cnt_reset     (cnt_reset)
     );
     
     // 3. 时钟分频生成器
-    i2s_clock_gen u_clkgen (
+    i2s_clk_gen u_clkgen (
         .pll_4x        (pll_4x),
         .locked        (locked),
-        .resetn        (resetn),
+        .reset         (cnt_reset),
         
         .mclk          (mclk),
         .bclk          (bclk),

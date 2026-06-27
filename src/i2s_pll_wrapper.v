@@ -19,7 +19,7 @@ module i2s_pll_wrapper(
     );
     
 
-    pll_i2s_44k1 pll_44k1 (
+    pll_i2s_44_1k pll_44k1 (
         .clkin  (clk_22_5792),
         .clkout (pll_4x_44k1),
         .lock   (locked_44k1),

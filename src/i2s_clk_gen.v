@@ -60,7 +60,7 @@ module i2s_clk_gen(
             fsclk_cnt <= 10'b0;
             fsclk <= 1'b0;
         end else if (locked) begin
-            if (fsclk_cnt == FSCLK_HALF - 1) begin
+            if (fsclk_cnt == FSCLK_HALF - 1 ) begin
                 fsclk_cnt <= 10'b0;
                 fsclk <= ~fsclk;
             end else begin
