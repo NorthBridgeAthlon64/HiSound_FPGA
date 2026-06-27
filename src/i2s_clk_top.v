@@ -25,14 +25,19 @@ module i2s_clk_top(
 );
     
 
-    wire reset = !resetn;        // 转换为高电平复位
+    wire reset = !resetn;
     
     // PLL输出
     wire pll_4x_48k, locked_48k;
     wire pll_4x_44k1, locked_44k1;
     
+    // MUX 输出
+    wire pll_4x, locked;
+    
     // 时钟生成输出
     wire mclk, bclk, fsclk;
+
+    wire cnt_reset;
     
     // 1. PLL封装（两个PLL并行工作）
     i2s_pll_wrapper u_pll (
@@ -47,11 +52,31 @@ module i2s_clk_top(
         .locked_44k1   (locked_44k1)
     );
     
-    // 2. 时钟分频生成器（固定使用48K PLL）
-    i2s_clk_gen u_clkgen (
-        .pll_4x        (pll_4x_48k),
-        .locked        (locked_48k),
+    // 2. 时钟 mux2（sample_sel 直接切换 PLL）
+    i2s_mux2 u_mux (
+        .clk_48k       (pll_4x_48k),
+        .locked_48k    (locked_48k),
+        .clk_44k1      (pll_4x_44k1),
+        .locked_44k1   (locked_44k1),
+        .sample_sel    (sample_sel),
+        
+        .pll_4x        (pll_4x),
+        .locked        (locked)
+    );
+
+    // 2.5 三级同步 sample_sel，切换时输出 cnt_reset 脉冲
+    i2s_dual_pll_sync u_sync (
+        .clk           (pll_4x_48k),
+        .sample_sel    (sample_sel),
         .reset         (reset),
+        .cnt_reset     (cnt_reset)
+    );
+    
+    // 3. 时钟分频生成器
+    i2s_clk_gen u_clkgen (
+        .pll_4x        (pll_4x),
+        .locked        (locked),
+        .reset         (cnt_reset),
         
         .mclk          (mclk),
         .bclk          (bclk),
