@@ -5,7 +5,7 @@ module i2s_clk_top(
     
     input  wire resetn,          // 低电平复位
     
-    // I2S时钟输出（ADC0用）
+    // I2S时钟输出（ADC用）
     output wire mclk0,           // 主时钟
     output wire bclk0,           // 位时钟
     output wire fsclk0,          // 帧时钟
@@ -14,13 +14,8 @@ module i2s_clk_top(
     output wire bclk1,
     output wire fsclk1,
 
-    // I2S时钟输出（ADC2用）
-    output wire mclk2,
-    output wire bclk2,
-    output wire fsclk2,
 
-    input wire data_in0,
-    input wire data_in2,
+    input wire data_in,
     output wire data_out
 );
     
@@ -89,15 +84,12 @@ module i2s_clk_top(
     assign bclk0  = bclk;
     assign fsclk0 = fsclk;
 
-    assign mclk2  = mclk;
-    assign bclk2  = bclk;
-    assign fsclk2 = fsclk;
     
     // 第二路I2S时钟（DAC等）
     assign bclk1  = bclk;
     assign fsclk1 = fsclk;
     
     // 数据mux2直通
-    assign data_out = sample_sel ? data_in0 : data_in2;
+    assign data_out = data_in;
 
 endmodule
