@@ -5,7 +5,7 @@ module i2s_clk_top(
     
     input  wire resetn,          // 低电平复位
     
-    // I2S时钟输出（ADC用）
+    // I2S时钟输出（ADC0用）
     output wire mclk0,           // 主时钟
     output wire bclk0,           // 位时钟
     output wire fsclk0,          // 帧时钟
@@ -14,7 +14,13 @@ module i2s_clk_top(
     output wire bclk1,
     output wire fsclk1,
 
-    input  wire data_in,
+    // I2S时钟输出（ADC2用）
+    output wire mclk2,
+    output wire bclk2,
+    output wire fsclk2,
+
+    input wire data_in0,
+    input wire data_in2,
     output wire data_out
 );
     
@@ -24,9 +30,6 @@ module i2s_clk_top(
     // PLL输出
     wire pll_4x_48k, locked_48k;
     wire pll_4x_44k1, locked_44k1;
-    
-    // Sync + MUX 输出
-    wire pll_4x, locked, cnt_reset;
     
     // 时钟生成输出
     wire mclk, bclk, fsclk;
@@ -44,25 +47,11 @@ module i2s_clk_top(
         .locked_44k1   (locked_44k1)
     );
     
-    // 2. 双PLL同步 + 时钟MUX（三级同步sample_sel，切换时复位计数器）
-    i2s_dual_pll_sync u_sync (
-        .pll_4x_48k    (pll_4x_48k),
-        .locked_48k    (locked_48k),
-        .pll_4x_44k1   (pll_4x_44k1),
-        .locked_44k1   (locked_44k1),
-        .sample_sel    (sample_sel),
-        .reset         (reset),
-
-        .pll_4x        (pll_4x),
-        .locked        (locked),
-        .cnt_reset     (cnt_reset)
-    );
-    
-    // 3. 时钟分频生成器
+    // 2. 时钟分频生成器（固定使用48K PLL）
     i2s_clk_gen u_clkgen (
-        .pll_4x        (pll_4x),
-        .locked        (locked),
-        .reset         (cnt_reset),
+        .pll_4x        (pll_4x_48k),
+        .locked        (locked_48k),
+        .reset         (reset),
         
         .mclk          (mclk),
         .bclk          (bclk),
@@ -74,12 +63,16 @@ module i2s_clk_top(
     assign mclk0  = mclk;
     assign bclk0  = bclk;
     assign fsclk0 = fsclk;
+
+    assign mclk2  = mclk;
+    assign bclk2  = bclk;
+    assign fsclk2 = fsclk;
     
     // 第二路I2S时钟（DAC等）
     assign bclk1  = bclk;
     assign fsclk1 = fsclk;
     
-    // 数据直通
-    assign data_out = data_in;
+    // 数据mux2直通
+    assign data_out = sample_sel ? data_in0 : data_in2;
 
 endmodule
