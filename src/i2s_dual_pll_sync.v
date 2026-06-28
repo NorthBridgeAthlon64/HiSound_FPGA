@@ -20,6 +20,25 @@ module i2s_dual_pll_sync(
     end
 
     wire sel_changed = sel_sync[2] != sel_d1;
-    assign cnt_reset = reset | sel_changed;
+
+    // 切换后 cnt_reset 保持 1024 周期（~10us），MCLK 短暂停振让 DAC/ADC 复位
+    reg [9:0] rst_cnt;
+    reg       rst_active;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            rst_cnt    <= 10'b0;
+            rst_active <= 1'b0;
+        end else begin
+            if (sel_changed)
+                rst_active <= 1'b1;
+            else if (rst_active)
+                rst_cnt <= rst_cnt + 1'b1;
+            if (rst_cnt == 10'd0 && rst_active && !sel_changed)
+                rst_active <= 1'b0;
+        end
+    end
+
+    assign cnt_reset = reset | rst_active;
 
 endmodule

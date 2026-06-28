@@ -59,7 +59,7 @@ module i2s_clk_top(
         .locked        (locked)
     );
 
-    // 2.5 三级同步 sample_sel，切换时输出 cnt_reset 脉冲
+    // 2.5 切换检测 + 长时间静音复位（~10ms，让 DAC/ADC PLL 失锁后重新锁定）
     i2s_dual_pll_sync u_sync (
         .clk           (pll_4x_48k),
         .sample_sel    (sample_sel),
